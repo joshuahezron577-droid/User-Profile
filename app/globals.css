@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@plugin "daisyui";
+@plugin "flowbite/plugin";
+
+/* Weka hii ili Tailwind ivute contents zote za Flowbite-React */
+@source "../node_modules/flowbite-react";
+
+
+
+
+
+
+
+
+
+
