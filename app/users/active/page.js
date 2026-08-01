@@ -15,11 +15,12 @@ export default function ActiveProfilePage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // userId = 1 kwa sasa, itabadilishwa na session baadaye
-  const userId = 1;
-
   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = storedUser?.id;
+
     async function fetchApproved() {
+      if (!userId) { setLoading(false); return; }
       try {
         const res = await fetch(`http://127.0.0.1:5000/api/projects/user/${userId}/approved`);
         const data = await res.json();

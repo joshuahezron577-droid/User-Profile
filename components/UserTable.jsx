@@ -13,29 +13,17 @@ import {
 export default function UserTable() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
 
-  // 1. Soma ID ya mtumiaji kutoka localStorage wakati ukurasa unapofunguka
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser && storedUser.id) {
-      setUserId(storedUser.id);
-    } else {
-      setUserId(1); // Fallback kama hakuna user aliyelogin
-    }
-  }, []);
-
-  // 2. Vuta miradi ya huyu user maalum pindi userId inapopatikana
-  useEffect(() => {
-    if (!userId) return;
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = storedUser?.id;
 
     async function fetchMyProjects() {
+      if (!userId) { setLoading(false); return; }
       try {
         const res = await fetch(`http://127.0.0.1:5000/api/projects/user/${userId}`);
         const data = await res.json();
-        if (data.success) {
-          setReports(data.projects);
-        }
+        if (data.success) setReports(data.projects);
       } catch (error) {
         console.error("Hitilafu ya mtandao:", error);
       } finally {
@@ -46,7 +34,7 @@ export default function UserTable() {
     fetchMyProjects();
     const interval = setInterval(fetchMyProjects, 5000);
     return () => clearInterval(interval);
-  }, [userId]);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50 w-full">

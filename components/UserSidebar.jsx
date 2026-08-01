@@ -14,6 +14,8 @@ export default function UserSidebar() {
     e.preventDefault();
     localStorage.removeItem("user");
     localStorage.removeItem("userId");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userEmail");
     router.push("/all_login");
   };
 

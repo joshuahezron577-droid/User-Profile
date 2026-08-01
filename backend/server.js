@@ -93,19 +93,28 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// 3. User anawasilisha mradi + file upload
+// 3. User anawasilisha mradi + file upload (huhifadhi kwa user_id aliyelogin pekee)
 app.post('/api/projects', upload.single('file'), async (req, res) => {
-  const { userId, fullName, email, projectName } = req.body;
+  const { userId, projectName } = req.body;
   const fileName = req.file ? req.file.filename : 'Hakuna faili';
 
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Lazima uingie kwanza!' });
+  }
   if (!projectName) {
     return res.status(400).json({ success: false, message: 'Tafadhali jaza jina la mradi!' });
   }
 
   try {
+    const [users] = await db.query('SELECT id, full_name, email FROM users WHERE id = ?', [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'Mtumiaji hajapatikana!' });
+    }
+    const user = users[0];
+
     await db.query(
       'INSERT INTO projects (user_id, full_name, email, project_name, file_name, submissionDate, status) VALUES (?, ?, ?, ?, ?, CURDATE(), ?)',
-      [userId || 1, fullName || '', email || '', projectName, fileName, 'Pending']
+      [user.id, user.full_name, user.email, projectName, fileName, 'Pending']
     );
     return res.status(201).json({ success: true, message: 'Mradi umehifadhiwa kwenye database kikamilifu!' });
   } catch (error) {
@@ -152,7 +161,35 @@ app.get('/api/projects/verified', async (_req, res) => {
   }
 });
 
-// 7. User — approved projects TU
+// 7. User — projects kwa email (Task & Report page)
+app.get('/api/projects/byemail/:email', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const [projects] = await db.query(
+      'SELECT id, project_name, file_name, submissionDate, status, verified_file FROM projects WHERE email = ? ORDER BY id DESC',
+      [email]
+    );
+    res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Imeshindikana kupata miradi ya mtumiaji huyu.' });
+  }
+});
+
+// 8. User — approved projects kwa email (Active Profile page)
+app.get('/api/projects/byemail/:email/approved', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const [projects] = await db.query(
+      'SELECT id, project_name, file_name, submissionDate, verified_file FROM projects WHERE email = ? AND status = ? ORDER BY id DESC',
+      [email, 'Approved']
+    );
+    res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Imeshindikana kupata miradi iliyoidhinishwa.' });
+  }
+});
+
+// 9. User — approved projects kwa userId
 app.get('/api/projects/user/:userId/approved', async (req, res) => {
   const { userId } = req.params;
   try {
@@ -166,7 +203,7 @@ app.get('/api/projects/user/:userId/approved', async (req, res) => {
   }
 });
 
-// 8. User — projects zake zote (kwa ajili ya dashboard yake binafsi)
+// 10. User — projects zake zote (kwa ajili ya dashboard yake binafsi)
 app.get('/api/projects/user/:userId', async (req, res) => {
   const { userId } = req.params;
   try {
@@ -180,7 +217,7 @@ app.get('/api/projects/user/:userId', async (req, res) => {
   }
 });
 
-// 9. Approve au Reject + verified_file upload
+// 11. Approve au Reject + verified_file upload
 app.put('/api/projects/:id', upload.single('verifiedFile'), async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -200,7 +237,7 @@ app.put('/api/projects/:id', upload.single('verifiedFile'), async (req, res) => 
   }
 });
 
-// 10. Futa mradi
+// 12. Futa mradi
 app.delete('/api/projects/:id', async (req, res) => {
   const { id } = req.params;
   try {

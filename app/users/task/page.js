@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Label, TextInput, FileInput } from "flowbite-react";
 import Navbar from "@/components/Navbar";
 
@@ -13,6 +13,17 @@ export default function UserTaskPage() {
   });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    if (storedUser) {
+      setForm((prev) => ({
+        ...prev,
+        fullName: storedUser.name || "",
+        email: storedUser.email || "",
+      }));
+    }
+  }, []);
+
   function handleChange(e) {
     const { name, id, value, files } = e.target;
     const key = name || id;
@@ -22,24 +33,22 @@ export default function UserTaskPage() {
       [key]: files && files.length > 0 ? files[0] : value,
     }));
   }
-
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.projectName) {
       alert("Tafadhali jaza jina la mradi!");
       return;
     }
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    if (!storedUser?.id) {
+      alert("Lazima uingie kwanza!");
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
-
-      // Chukua ID ya mtumiaji aliyelogin kwa sasa
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      const currentUserId = storedUser ? storedUser.id : 1;
-
-      formData.append("userId", currentUserId);
-      formData.append("fullName", form.fullName);
-      formData.append("email", form.email);
+      formData.append("userId", storedUser.id);
       formData.append("projectName", form.projectName);
       if (form.file) formData.append("file", form.file);
 
@@ -51,7 +60,7 @@ export default function UserTaskPage() {
 
       if (response.ok && data.success) {
         alert("Mradi umewasilishwa na kuingia kwenye database!");
-        setForm({ fullName: "", email: "", projectName: "", file: null });
+        setForm((prev) => ({ ...prev, projectName: "", file: null }));
       } else {
         alert("Imeshindikana: " + (data.message || "Hitilafu imetokea."));
       }
@@ -81,22 +90,22 @@ export default function UserTaskPage() {
                 <Label htmlFor="fullName" value="Full Name" className="mb-2 block font-semibold text-white text-sm" />
                 <TextInput
                   id="fullName"
-                  name="fullName"
                   type="text"
                   placeholder="Weka jina lako"
                   value={form.fullName}
-                  onChange={handleChange}
+                  onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                  required
                 />
               </div>
               <div>
                 <Label htmlFor="email" value="Email Address" className="mb-2 block font-semibold text-white text-sm" />
                 <TextInput
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="name@example.com"
                   value={form.email}
-                  onChange={handleChange}
+                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                  required
                 />
               </div>
             </div>
@@ -105,18 +114,17 @@ export default function UserTaskPage() {
               <Label htmlFor="projectName" value="Project Name" className="mb-2 block font-semibold text-white text-sm" />
               <TextInput
                 id="projectName"
-                name="projectName"
                 type="text"
                 placeholder="Andika jina la mradi wako"
                 value={form.projectName}
-                onChange={handleChange}
+                onChange={(e) => setForm((prev) => ({ ...prev, projectName: e.target.value }))}
                 required
               />
             </div>
 
             <div>
               <Label htmlFor="file" value="Upload Project File (.zip, .pdf, n.k)" className="mb-2 block font-semibold text-white text-sm" />
-              <FileInput id="file" name="file" onChange={handleChange} className="bg-white rounded-lg" />
+              <FileInput id="file" onChange={(e) => setForm((prev) => ({ ...prev, file: e.target.files[0] || null }))} className="bg-white rounded-lg" />
               <p className="mt-1 text-xs text-gray-300">Max size (500mb)</p>
             </div>
 

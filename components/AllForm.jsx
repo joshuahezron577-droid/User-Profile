@@ -31,6 +31,7 @@ export default function AllForm() {
       if (response.ok && data.success) {
         // Hapa ndipo tunatengeneza SESSION kwa kuhifadhi taarifa kwenye localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("userId", String(data.user.id));
         localStorage.setItem("role", data.role);
 
         alert("Umeingia kwa mafanikio!");
